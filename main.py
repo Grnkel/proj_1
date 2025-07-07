@@ -5,8 +5,8 @@ image = cv2.imread('image.jpg')
 image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 height, width = np.shape(image)
 
-vertical_slices = 7
-horizontal_slices = 7
+vertical_slices = 1
+horizontal_slices = 1
 
 def extend(im, x=0, y=0):
     for x in range(x):
@@ -38,7 +38,8 @@ def fit(im, v_slices=1, h_slices=1):
 #def select(im, v_slice, h_slice): TODO skapa klass för skiten
 # TODO behöver kind of motsatsen, börja med en form och få antal slices + fit
 
-image = fit(image, vertical_slices, horizontal_slices)
+image= extend(image, 200, 200)
+#image = fit(image, vertical_slices, horizontal_slices)
 
 print(np.shape(image))
  
