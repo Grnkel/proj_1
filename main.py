@@ -60,6 +60,7 @@ for row in range(vertical_slices):
 
 # TODO skapa klass för skiten
 # TODO behöver kind of motsatsen, börja med en form och få antal slices + fit
+# TODO använd insikter från convolutional networks, kolla lite diskret optimering
  
 cv2.imshow('', image)
 cv2.waitKey(0)
