@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 from multiprocessing import Pool, cpu_count, shared_memory
 from functools import partial
+import random as rand
 
 # TODO skapa klass för skiten
 # TODO behöver kind of motsatsen, börja med en form och få antal slices + fit
@@ -46,18 +47,23 @@ def fit(im, v_slices=1, h_slices=1):
     
     return extend(im, v_diff, h_diff)
 
-def pararell_apply(shm_name, shape, dtype, cores, v_slices, h_slices, height_ch, width_ch, i):
+def pararell_apply(shm_name, shape, dtype, cores, v_slices, h_slices, height_ch, width_ch, dual):
+    i, j = dual
     shm = shared_memory.SharedMemory(name=shm_name)
     image = np.ndarray(shape, dtype=dtype, buffer=shm.buf)
 
-    start = int(np.ceil(i * v_slices / cores))
-    end = int(np.ceil((i + 1) * v_slices / cores)) 
+    v_start = int(np.ceil(i * v_slices / cores))
+    v_end = int(np.ceil((i + 1) * v_slices / cores)) 
+    h_start = int(np.ceil(j * h_slices / cores))
+    h_end = int(np.ceil((j + 1) * h_slices / cores)) 
 
-    for row in list(range(v_slices))[start:end]:
-        for col in range(h_slices): 
+    random_int = rand.randrange(0,255)
+    for row in range(v_slices)[v_start:v_end]:
+        for col in range(h_slices)[h_start:h_end]: 
+            
             ROW = slice(row * height_ch, (row + 1) * height_ch)
             COL = slice(col * width_ch, (col + 1) * width_ch)
-            image[ROW, COL] = np.sum(image[ROW, COL]) / (height_ch * width_ch)
+            image[ROW, COL] = random_int#np.sum(image[ROW, COL]) / (height_ch * width_ch)
     shm.close()
 
 def main():
@@ -85,9 +91,9 @@ def main():
             height_chunk,
             width_chunk
         )
-
+    space = np.concat([[(row,col) for col in range(cpu_count())] for row in range(cpu_count())])
     with Pool(processes=cpu_count()) as pool:
-        pool.map(partial_func, range(cpu_count()))
+        pool.map(partial_func, space)
 
     cv2.imshow('', shared_mem_image)
     cv2.waitKey(0)
