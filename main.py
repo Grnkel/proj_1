@@ -1,18 +1,16 @@
 import numpy as np
 import cv2
+from multiprocessing import Pool, cpu_count, shared_memory
+from functools import partial
 
-image = cv2.imread('image.jpg')
-image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-height, width = np.shape(image)
-
-vertical_slices = 50
-horizontal_slices = 50
-
-print("the shape of the image:", np.shape(image))
+# TODO skapa klass för skiten
+# TODO behöver kind of motsatsen, börja med en form och få antal slices + fit
+# TODO använd insikter från convolutional networks, kolla lite diskret optimering
+# TODO nu börjar det verkligen bli jobbigt att inte ha en klass för detta
 
 def extend(im, x=0, y=0):
-    assert(x>0)
-    assert(y>0)
+    assert(x>=0)
+    assert(y>=0)
 
     for x in range(x):
         i = 0 if x % 2 == 0 else -1
@@ -45,23 +43,57 @@ def fit(im, v_slices=1, h_slices=1):
 
     print("recommended slices:", "v:", r_v_slice, "h:", r_h_slice)
     print("diffs:", v_diff, h_diff)
-    return extend(image, v_diff, h_diff)
+    
+    return extend(im, v_diff, h_diff)
 
-image = fit(image, vertical_slices, horizontal_slices)
-ch_h, ch_w = chunk_shape(image, vertical_slices, horizontal_slices)
-for row in range(vertical_slices):
-    for col in range(horizontal_slices): 
-        ROW = slice(row * ch_h, (row + 1) * ch_h)
-        COL = slice(col * ch_w, (col + 1) * ch_w)
-        image[ROW, COL] = np.sum(image[ROW, COL]) / (ch_h*ch_w)
+def pararell_apply(shm_name, shape, dtype, cores, v_slices, h_slices, height_ch, width_ch, i):
+    shm = shared_memory.SharedMemory(name=shm_name)
+    image = np.ndarray(shape, dtype=dtype, buffer=shm.buf)
 
-        #cv2.imshow('', image)
-        #cv2.waitKey(1)
+    start = int(np.ceil(i * v_slices / cores))
+    end = int(np.ceil((i + 1) * v_slices / cores)) 
 
-# TODO skapa klass för skiten
-# TODO behöver kind of motsatsen, börja med en form och få antal slices + fit
-# TODO använd insikter från convolutional networks, kolla lite diskret optimering
- 
-cv2.imshow('', image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+    for row in list(range(v_slices))[start:end]:
+        for col in range(h_slices): 
+            ROW = slice(row * height_ch, (row + 1) * height_ch)
+            COL = slice(col * width_ch, (col + 1) * width_ch)
+            image[ROW, COL] = np.sum(image[ROW, COL]) / (height_ch * width_ch)
+    shm.close()
+
+def main():
+    image = cv2.imread('image.jpg')
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    vertical_slices = 50
+    horizontal_slices = 50
+
+    image = fit(image, vertical_slices, horizontal_slices)
+    height_chunk, width_chunk = chunk_shape(image, vertical_slices, horizontal_slices)  
+
+    shm = shared_memory.SharedMemory(create=True, size=image.nbytes)
+    shared_mem_image = np.ndarray(image.shape, dtype=image.dtype, buffer=shm.buf)
+    shared_mem_image[:] = image[:]
+
+    partial_func = partial(
+            pararell_apply,
+            shm.name,
+            image.shape,
+            image.dtype,
+            cpu_count(),
+            vertical_slices,
+            horizontal_slices,
+            height_chunk,
+            width_chunk
+        )
+
+    with Pool(processes=cpu_count()) as pool:
+        pool.map(partial_func, range(cpu_count()))
+
+    cv2.imshow('', shared_mem_image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    shm.close()
+    shm.unlink()
+
+main()
