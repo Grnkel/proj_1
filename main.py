@@ -1,6 +1,5 @@
 from multiprocessing import Pool, cpu_count, shared_memory
 from functools import partial
-import random as rand
 import numpy as np
 import cv2
 
@@ -83,15 +82,22 @@ def pararell_apply(shm_name, shape, dtype, cores, v_slices, h_slices, height_ch,
         for col in range(h_slices)[h_start:h_end]: 
             ROW = slice(row * height_ch, (row + 1) * height_ch)
             COL = slice(col * width_ch, (col + 1) * width_ch)
-            result = np.sum(image[ROW, COL])/(height_ch*width_ch)
-            image[ROW, COL] = result
+
+            image = contrast(image, 20, 0.5, ROW,COL, height_ch, width_ch)            
     shm.close()
+
+def contrast(im, k, hw, row, col, h_ch, w_ch):
+    x = np.sum(im[row, col])/(h_ch*w_ch) / 255
+    exp = np.e**(k*(x-hw))
+    sigmoid = exp / (1 + exp)
+    im[row, col] = sigmoid * 255
+    return im
 
 def main():
     IMAGE = cv2.imread('image.jpg')
     IMAGE = cv2.cvtColor(IMAGE, cv2.COLOR_BGR2GRAY)
-    CH_HEIGHT = 10 
-    CH_WIDTH = 10
+    CH_HEIGHT = 5 
+    CH_WIDTH = 5
     CORES = cpu_count()
     IMAGE, horizontal_slices, vertical_slices = fit_chunk(IMAGE, CH_HEIGHT, CH_WIDTH)
     
