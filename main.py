@@ -68,7 +68,7 @@ def fit_chunk(im, width, height):
 
     return extend(im, v_diff, h_diff), v_slices, h_slices
 
-def pararell_apply(shm_name, shape, dtype, cores, v_slices, h_slices, height_ch, width_ch, dual):
+def pararell(shm_name, shape, dtype, cores, v_slices, h_slices, height_ch, width_ch, dual):
     i, j = dual
     shm = shared_memory.SharedMemory(name=shm_name)
     image = np.ndarray(shape, dtype=dtype, buffer=shm.buf)
@@ -94,10 +94,10 @@ def contrast(im, k, hw, row, col, h_ch, w_ch):
     return im
 
 def main():
-    IMAGE = cv2.imread('image.jpg')
+    IMAGE = cv2.imread('images/image1.jpg')
     IMAGE = cv2.cvtColor(IMAGE, cv2.COLOR_BGR2GRAY)
-    CH_HEIGHT = 5 
-    CH_WIDTH = 5
+    CH_HEIGHT = 10 
+    CH_WIDTH = 10
     CORES = cpu_count()
     IMAGE, horizontal_slices, vertical_slices = fit_chunk(IMAGE, CH_HEIGHT, CH_WIDTH)
     
@@ -106,7 +106,7 @@ def main():
     shared_mem_image[:] = IMAGE[:]
 
     partial_func = partial(
-            pararell_apply,
+            pararell,
             shm.name,
             IMAGE.shape,
             IMAGE.dtype,
