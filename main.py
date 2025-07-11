@@ -116,7 +116,11 @@ def main():
             CH_HEIGHT,
             CH_WIDTH
         )
-    space = np.concat([[(row,col) for col in range(CORES)] for row in range(vertical_slices)])
+    space = np.array([
+        (row, col)
+        for row in range(vertical_slices)
+        for col in range(CORES)
+    ])
     with Pool(processes=cpu_count()) as pool:
         pool.map(partial_func, space)
 
