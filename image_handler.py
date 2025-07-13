@@ -1,1 +1,0 @@
-# TODO klass för pararell bildanalys

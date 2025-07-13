@@ -83,7 +83,7 @@ def pararell(shm_name, shape, dtype, cores, v_slices, h_slices, height_ch, width
             ROW = slice(row * height_ch, (row + 1) * height_ch)
             COL = slice(col * width_ch, (col + 1) * width_ch)
 
-            image = contrast(image, 20, 0.5, ROW,COL, height_ch, width_ch)            
+            image = contrast(image, 10, 0.5, ROW,COL, height_ch, width_ch)            
     shm.close()
 
 def contrast(im, k, hw, row, col, h_ch, w_ch):
@@ -96,8 +96,8 @@ def contrast(im, k, hw, row, col, h_ch, w_ch):
 def main():
     IMAGE = cv2.imread('images/image1.jpg')
     IMAGE = cv2.cvtColor(IMAGE, cv2.COLOR_BGR2GRAY)
-    CH_HEIGHT = 10 
-    CH_WIDTH = 10
+    CH_HEIGHT = 1
+    CH_WIDTH = 1
     CORES = cpu_count()
     IMAGE, horizontal_slices, vertical_slices = fit_chunk(IMAGE, CH_HEIGHT, CH_WIDTH)
     
