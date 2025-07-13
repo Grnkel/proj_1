@@ -2,6 +2,7 @@ from multiprocessing import Pool, cpu_count, shared_memory
 from functools import partial
 import numpy as np
 import cv2
+import time
 
 import random as rand
 
@@ -93,13 +94,11 @@ class ImageHandler():
     def apply(self, cores=cpu_count()):
         shm = shared_memory.SharedMemory(create=True, size=self.image.nbytes)
         shared_mem_image = np.ndarray(self.image.shape, dtype=self.image.dtype, buffer=shm.buf)
-        shared_mem_image[:] = self.image[:]  # Copy data to shared memory
+        shared_mem_image[:] = self.image[:]
 
         partial_func = partial(
             self.parallel,
             shm.name,
-            self.image.shape,
-            self.image.dtype,
             cores
         )
 
@@ -112,36 +111,50 @@ class ImageHandler():
         with Pool(processes=cores) as pool:
             pool.map(partial_func, space)
 
-        # Read back into self.image after multiprocessing
+        # read back
         self.image = shared_mem_image.copy()
         shm.close()
         shm.unlink()
 
-    def parallel(self, shm_name, shape, dtype, cores, task):
+    def parallel(self, shm_name, cores, task):
         i, j = task
         shm = shared_memory.SharedMemory(name=shm_name)
-        image = np.ndarray(shape, dtype=dtype, buffer=shm.buf)
+        image = np.ndarray(self.image.shape, dtype=self.image.dtype, buffer=shm.buf)
 
         v_start = int(np.ceil(i))
         v_end = int(np.ceil((i + 1)))
         h_start = int(np.ceil(j * self.slices[1] / cores))
         h_end = int(np.ceil((j + 1) * self.slices[1] / cores))
 
-        random_core = rand.randrange(15, 240)
         for row in range(v_start, v_end):
             for col in range(h_start, h_end):
-                random_chunk = rand.randrange(-15, 15)
                 ROW = slice(row * self.chunk_dims[0], (row + 1) * self.chunk_dims[0])
                 COL = slice(col * self.chunk_dims[1], (col + 1) * self.chunk_dims[1])
-                image[ROW, COL] = random_core + random_chunk
+                res = np.sum(image[ROW, COL])/(self.chunk_dims[0]*self.chunk_dims[1])
+                image[ROW, COL] = res
 
         shm.close()
+
+# TODO gör parallelliseringen mer generell, 
+# att man kan lägga in godtycklig funktion som opererar på chunks
+
+# TODO använd detta för att extrahera ASCII bildens chunks till 
+# en lista som kan loopas över för att kolla grejer eller manipulera / 
+# kopiera skit
+
+# TODO skapa en iter-instance för denna klass som ger referens och 
+# tillgång till varje chunk, likt ovan
+
+# TODO egen klass för ascii som implementerar imageHandler?
     
 def testing():
     image = ImageHandler('images/image1.jpg')
     image.grayscale()
-    image.fit_chunk(5,5)
-    image.apply(8)
+    image.fit_chunk(1,1)
+
+    timer = time.perf_counter_ns()
+    image.apply()
+    print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
     
     image.show()
 
