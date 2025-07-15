@@ -15,3 +15,5 @@ ascii_dict = {
     for y, row in enumerate(ascii_matrix)
     for x, char in enumerate(row)
 }
+
+

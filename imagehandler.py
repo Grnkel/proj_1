@@ -188,7 +188,7 @@ def ascii_print(image, row, col):
     ascii = ImageHandler('chars/font8x12.png')
     ascii.grayscale()
     ascii.fit_chunk(12,8)
-    i,j = ascii_dict["M"]
+    i,j = ascii_dict["X"]
     normalized = image[row, col] / 255.0 
     return ascii[i,j] * normalized    
     
@@ -203,6 +203,20 @@ def testing():
     print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
 
     image.show()
+
+class Ascii(ImageHandler): # TODO gör att man kan indexera med "bokstav"
+    def __getitem__(self, index):
+        i, j = index
+        rows = slice(i * self.chunk_dims[0], (i + 1) * self.chunk_dims[0])
+        cols = slice(j * self.chunk_dims[1], (j + 1) * self.chunk_dims[1])
+        return self.image[rows, cols]
+    
+    def __setitem__(self, index, value):
+        i, j = index
+        rows = slice(i * self.chunk_dims[0], (i + 1) * self.chunk_dims[0])
+        cols = slice(j * self.chunk_dims[1], (j + 1) * self.chunk_dims[1])
+        self.image[rows, cols] = value
+
 
 testing()
     
