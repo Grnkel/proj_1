@@ -75,12 +75,12 @@ class ImageHandler():
         # resizing image to fit with slices
 
         ch_height = -(-self.dims[0] // v_slices)
-        ch_width = -(-self.dims[1] // v_slices)
+        ch_width = -(-self.dims[1] // h_slices)
 
         diff_y = -self.dims[0] % ch_height
         diff_x = -self.dims[1] % ch_width
 
-        self.extend(diff_x,diff_y)
+        self.extend(diff_y, diff_x)
 
         self.chunk_dims = ch_height, ch_width
         self.slices = v_slices, h_slices
@@ -100,7 +100,7 @@ class ImageHandler():
         diff_y = ch_height * v_slices - self.dims[0]
         diff_x = ch_width * h_slices - self.dims[1]
 
-        self.extend(diff_x,diff_y)
+        self.extend(diff_y, diff_x)
 
         self.chunk_dims = ch_height, ch_width
         self.slices = v_slices, h_slices
@@ -188,7 +188,7 @@ def random_color(row, col):
 def testing():
     image = ImageHandler('images/image1.jpg')
     image.grayscale()
-    image.fit_chunk(12,16)
+    image.fit_chunk(16,12)
 
     timer = time.perf_counter_ns()
     image.apply(func=random_color)
