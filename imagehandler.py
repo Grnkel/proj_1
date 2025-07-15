@@ -108,7 +108,7 @@ class ImageHandler():
         print("diffs:", diff_y, diff_x)
         print("slices:", "v:", v_slices, "h:", h_slices)
     
-    def apply(self, cores=cpu_count()):
+    def apply(self, cores=cpu_count(), func=None):
         shm = shared_memory.SharedMemory(create=True, size=self.image.nbytes)
         shared_mem_image = np.ndarray(self.image.shape, dtype=self.image.dtype, buffer=shm.buf)
         shared_mem_image[:] = self.image[:]
@@ -116,7 +116,9 @@ class ImageHandler():
         partial_func = partial(
             self.parallel,
             shm.name,
-            cores
+            cores,
+            func,
+
         )
 
         space = [
@@ -133,7 +135,7 @@ class ImageHandler():
         shm.close()
         shm.unlink()
 
-    def parallel(self, shm_name, cores, task):
+    def parallel(self, shm_name, cores, cunk_func, task):
         i, j = task
         shm = shared_memory.SharedMemory(name=shm_name)
         image = np.ndarray(self.image.shape, dtype=self.image.dtype, buffer=shm.buf)
@@ -147,10 +149,26 @@ class ImageHandler():
             for col in range(h_start, h_end):
                 ROW = slice(row * self.chunk_dims[0], (row + 1) * self.chunk_dims[0])
                 COL = slice(col * self.chunk_dims[1], (col + 1) * self.chunk_dims[1])
-                res = np.sum(image[ROW, COL])/(self.chunk_dims[0]*self.chunk_dims[1])
-                image[ROW, COL] = res
+                #res = np.sum(image[ROW, COL])/(self.chunk_dims[0]*self.chunk_dims[1])
+                image[ROW, COL] = cunk_func(row,col)
 
         shm.close()
+    
+    def contrast(self, k=1.0, hw=0.5, row=None, col=None):
+        if row is None or col is None:
+            raise ValueError("row and col slices must be provided")
+        h_ch, w_ch = self.chunk_dims
+        x = np.sum(self.image[row, col]) / (h_ch * w_ch) / 255
+        exp = np.exp(k * (x - hw))
+        sigmoid = exp / (1 + exp)
+        self.image[row, col] = sigmoid * 255
+        return self.image
+    
+    def checkers(self):
+        for i in range(self.slices[0]):
+            for j in range(self.slices[1]):
+                self[i, j] = 0 if (i % 2 == 0) and (j % 2 == 0) else 255
+        return self.image
 
 # TODO gör parallelliseringen mer generell, 
 # att man kan lägga in godtycklig funktion som opererar på chunks
@@ -163,21 +181,19 @@ class ImageHandler():
 # tillgång till varje chunk, likt ovan
 
 # TODO egen klass för ascii som implementerar imageHandler?
+
+def random_color(row, col):
+    return np.random.randint(0, 256)
     
 def testing():
     image = ImageHandler('images/image1.jpg')
     image.grayscale()
-    image.fit_chunk(30,30)
+    image.fit_chunk(12,16)
 
-    #timer = time.perf_counter_ns()
-    #image.apply()
-    #print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
-    for i in range(image.slices[0])[:]:
-        for j in range(image.slices[1])[:]:
-            image[i,j] = 0 if (i % 2 == 0) and (j % 2 == 0) else 255
-            
-    print(image.dims)
-    print(image.slices)
+    timer = time.perf_counter_ns()
+    image.apply(func=random_color)
+    print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
+
     image.show()
 
 testing()
