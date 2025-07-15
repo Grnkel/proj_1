@@ -4,6 +4,9 @@ import numpy as np
 import cv2
 import time
 
+# own stuff
+from ascii import ascii_dict, ascii_matrix  
+
 class ImageHandler():
     def __init__(self, path):
         self.path = path
@@ -17,7 +20,6 @@ class ImageHandler():
         for i in range(0, height, self.chunk_dims[0]):
             for j in range(0, width, self.chunk_dims[1]):
                 yield self.image[i:i+self.chunk_dims[0], j:j+self.chunk_dims[1]]
-    
 
     def __getitem__(self, index):
         i, j = index
@@ -85,8 +87,8 @@ class ImageHandler():
         self.chunk_dims = ch_height, ch_width
         self.slices = v_slices, h_slices
 
-        print("diffs:", diff_y, diff_x)
-        print("chunk dims:", ch_height, ch_width)
+        #print("diffs:", diff_y, diff_x)
+        #print("chunk dims:", ch_height, ch_width)
 
     def fit_chunk(self, ch_height=1, ch_width=1):
         assert(ch_height>0)
@@ -105,8 +107,8 @@ class ImageHandler():
         self.chunk_dims = ch_height, ch_width
         self.slices = v_slices, h_slices
 
-        print("diffs:", diff_y, diff_x)
-        print("slices:", "v:", v_slices, "h:", h_slices)
+        #print("diffs:", diff_y, diff_x)
+        #print("slices:", "v:", v_slices, "h:", h_slices)
     
     def apply(self, cores=cpu_count(), func=None):
         shm = shared_memory.SharedMemory(create=True, size=self.image.nbytes)
@@ -182,16 +184,22 @@ class ImageHandler():
 
 # TODO egen klass för ascii som implementerar imageHandler?
 
-def random_color(row, col):
-    return np.random.randint(0, 256)
+def ascii_print(image, row, col):
+    ascii = ImageHandler('chars/font8x12.png')
+    ascii.grayscale()
+    ascii.fit_chunk(12,8)
+    i,j = ascii_dict["M"]
+    normalized = image[row, col] / 255.0 
+    return ascii[i,j] * normalized    
     
 def testing():
     image = ImageHandler('images/image1.jpg')
     image.grayscale()
-    image.fit_chunk(16,12)
+    image.fit_chunk(12,8)
 
     timer = time.perf_counter_ns()
-    image.apply(func=random_color)
+
+    image.apply(func=partial(ascii_print, image))
     print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
 
     image.show()
