@@ -21,14 +21,14 @@ class ImageHandler():
 
     def __getitem__(self, index):
         i, j = index
-        rows = slice(i * self.chunk_dims[0], (i + 1) * self.chunk_dims[0]+1)
-        cols = slice(j * self.chunk_dims[1], (j + 1) * self.chunk_dims[1]+1)
+        rows = slice(i * self.chunk_dims[0], (i + 1) * self.chunk_dims[0])
+        cols = slice(j * self.chunk_dims[1], (j + 1) * self.chunk_dims[1])
         return self.image[rows, cols]
     
     def __setitem__(self, index, value):
         i, j = index
-        rows = slice(i * self.chunk_dims[0], (i + 1) * self.chunk_dims[0]+1)
-        cols = slice(j * self.chunk_dims[1], (j + 1) * self.chunk_dims[1]+1)
+        rows = slice(i * self.chunk_dims[0], (i + 1) * self.chunk_dims[0])
+        cols = slice(j * self.chunk_dims[1], (j + 1) * self.chunk_dims[1])
         self.image[rows, cols] = value
 
     def update(self, image):
@@ -145,8 +145,8 @@ class ImageHandler():
 
         for row in range(v_start, v_end):
             for col in range(h_start, h_end):
-                ROW = slice(row * self.chunk_dims[0], (row + 1) * self.chunk_dims[0]+1)
-                COL = slice(col * self.chunk_dims[1], (col + 1) * self.chunk_dims[1]+1)
+                ROW = slice(row * self.chunk_dims[0], (row + 1) * self.chunk_dims[0])
+                COL = slice(col * self.chunk_dims[1], (col + 1) * self.chunk_dims[1])
                 res = np.sum(image[ROW, COL])/(self.chunk_dims[0]*self.chunk_dims[1])
                 image[ROW, COL] = res
 
@@ -167,13 +167,15 @@ class ImageHandler():
 def testing():
     image = ImageHandler('images/image1.jpg')
     image.grayscale()
-    image.fit_chunk(20,20)
+    image.fit_chunk(30,30)
 
     #timer = time.perf_counter_ns()
     #image.apply()
     #print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
-    for i in range(image.slices[1])[1:-1]:
-        image[i,0] = 0 if i % 2 == 0 else 255
+    for i in range(image.slices[0])[:]:
+        for j in range(image.slices[1])[:]:
+            image[i,j] = 0 if (i % 2 == 0) and (j % 2 == 0) else 255
+            
     print(image.dims)
     print(image.slices)
     image.show()
