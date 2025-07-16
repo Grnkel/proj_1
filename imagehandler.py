@@ -3,6 +3,7 @@ from functools import partial
 import numpy as np
 import cv2
 import time
+import re
 
 # own stuff
 from ascii import ascii_dict, ascii_matrix  
@@ -172,18 +173,6 @@ class ImageHandler():
                 self[i, j] = 0 if (i % 2 == 0) and (j % 2 == 0) else 255
         return self.image
 
-# TODO gör parallelliseringen mer generell, 
-# att man kan lägga in godtycklig funktion som opererar på chunks
-
-# TODO använd detta för att extrahera ASCII bildens chunks till 
-# en lista som kan loopas över för att kolla grejer eller manipulera / 
-# kopiera skit
-
-# TODO skapa en iter-instance för denna klass som ger referens och 
-# tillgång till varje chunk, likt ovan
-
-# TODO egen klass för ascii som implementerar imageHandler?
-
 def ascii_print(image, row, col):
     ascii = ImageHandler('chars/font8x12.png')
     ascii.grayscale()
@@ -205,18 +194,47 @@ def testing():
     image.show()
 
 class Ascii(ImageHandler): # TODO gör att man kan indexera med "bokstav"
-    def __getitem__(self, index):
-        i, j = index
-        rows = slice(i * self.chunk_dims[0], (i + 1) * self.chunk_dims[0])
-        cols = slice(j * self.chunk_dims[1], (j + 1) * self.chunk_dims[1])
-        return self.image[rows, cols]
+    def __init__(self, path, ascii_matrix):   
+        ascii_dict = {
+            char: (y, x)
+            for y, row in enumerate(ascii_matrix)
+            for x, char in enumerate(row)
+        }
+        self.dict = ascii_dict
+        self.matrix = ascii_matrix
+
+        super().__init__(path)
+        super().grayscale()
+        match = re.match(r"chars/font(\d+)x(\d+).png", path)
+        if match:
+            width, height = match.groups()
+            super().fit_chunk(int(height), int(width))
+        else:
+            ValueError("Invalid file")
+
+    def __getitem__(self, key):
+        return super().__getitem__(self.dict[key])
     
-    def __setitem__(self, index, value):
-        i, j = index
-        rows = slice(i * self.chunk_dims[0], (i + 1) * self.chunk_dims[0])
-        cols = slice(j * self.chunk_dims[1], (j + 1) * self.chunk_dims[1])
-        self.image[rows, cols] = value
+    def __setitem__(self, key, value):
+        super().__setitem__(self.dict[key], value)
+
+    def __iter__(self):
+        return super().__iter__()
+
+ascii = Ascii('chars/font12x16.png', ascii_dict)
+ascii["X"] = 0
+ascii_flat = np.squeeze(ascii.matrix)
+print(ascii_flat)
+print(ascii["X"])
+
+for x in ascii:
+    if x == ascii["X"]:
+        print(x)
+#print(ascii_dict["A"])
 
 
-testing()
+
+
+
+
     
