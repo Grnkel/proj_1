@@ -87,6 +87,8 @@ class ImageHandler():
 
         self.chunk_dims = ch_height, ch_width
         self.slices = v_slices, h_slices
+        self.chunks = v_slices * h_slices
+        self.chunk_pixels = ch_height * ch_width
 
         #print("diffs:", diff_y, diff_x)
         #print("chunk dims:", ch_height, ch_width)
@@ -107,6 +109,8 @@ class ImageHandler():
 
         self.chunk_dims = ch_height, ch_width
         self.slices = v_slices, h_slices
+        self.chunks = v_slices * h_slices
+        self.chunk_pixels = ch_height * ch_width
 
         #print("diffs:", diff_y, diff_x)
         #print("slices:", "v:", v_slices, "h:", h_slices)
@@ -173,26 +177,6 @@ class ImageHandler():
                 self[i, j] = 0 if (i % 2 == 0) and (j % 2 == 0) else 255
         return self.image
 
-def ascii_print(image, row, col):
-    ascii = ImageHandler('chars/font8x12.png')
-    ascii.grayscale()
-    ascii.fit_chunk(12,8)
-    i,j = ascii_dict["X"]
-    normalized = image[row, col] / 255.0 
-    return ascii[i,j] * normalized    
-    
-def testing():
-    image = ImageHandler('images/image1.jpg')
-    image.grayscale()
-    image.fit_chunk(12,8)
-
-    timer = time.perf_counter_ns()
-
-    image.apply(func=partial(ascii_print, image))
-    print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
-
-    image.show()
-
 class Ascii(ImageHandler):
     def __init__(self, path, ascii_dict):   
         self.dict = ascii_dict
@@ -212,10 +196,35 @@ class Ascii(ImageHandler):
     def __setitem__(self, key, value):
         super().__setitem__(self.dict[key], value)
 
-ascii = Ascii('chars/font12x16.png', ascii_dict)
+    def generate_list(self):
+        temp = []
+        for key in self.dict:
+            sum = np.sum(self.__getitem__(key)) / 255
+            temp.append((key,sum))
+        self.sorted = [key for key, _ in sorted(temp, key=lambda x: x[1])]
 
-for mat, key in zip(ascii, ascii_dict):
-    print("lmao", mat, ascii[key]) if (ascii[key] != mat).any() else None
+def ascii_print(ascii, image, row, col):
+    index = np.sum(image[row, col]) / image.chunk_pixels / 255 
+    index = ascii.sorted[int(index*len(ascii.sorted))]
+    return ascii[index]
+    
+def testing():
+    image = ImageHandler('images/image1.jpg')
+    ascii = Ascii('chars/font4x6.png', ascii_dict)
+    ascii.generate_list()
+    image.grayscale()
+    image.fit_chunk(6,4)
+
+    timer = time.perf_counter_ns()
+    image.apply(func=partial(ascii_print, ascii, image))
+    print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
+
+
+    image.show()
+
+
+
+testing()
 
 
 
