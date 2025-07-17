@@ -5,8 +5,7 @@ import cv2
 import time
 import re
 
-# own stuff
-from ascii import ascii_dict, ascii_matrix  
+from ascii import ascii_dict
 
 class ImageHandler():
     def __init__(self, path):
@@ -203,29 +202,38 @@ class Ascii(ImageHandler):
             temp.append((key,sum))
         self.sorted = [key for key, _ in sorted(temp, key=lambda x: x[1])]
 
-def ascii_print(ascii, image, row, col):
-    index = np.sum(image[row, col]) / image.chunk_pixels / 255 
-    index = ascii.sorted[int(index*len(ascii.sorted))]
-    return ascii[index]
+    def ascii_print(self, image, row, col):
+        index = np.sum(image[row, col]) / image.chunk_pixels / 256 
+        index = self.sorted[int(index*len(self.sorted))]
+        return self.__getitem__(index)
     
-def testing():
-    image = ImageHandler('images/image1.jpg')
+def main():
+    image = ImageHandler('images/image3.jpg')
     ascii = Ascii('chars/font4x6.png', ascii_dict)
     ascii.generate_list()
     image.grayscale()
-    image.fit_chunk(6,4)
+    height, width = ascii.chunk_dims
+    image.fit_chunk(height, width)
 
     timer = time.perf_counter_ns()
-    image.apply(func=partial(ascii_print, ascii, image))
+    image.apply(func=partial(ascii.ascii_print, image))
     print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
-
-
     image.show()
 
+main()
 
+# TODO lägg till färg
+# TODO gör det till video
 
-testing()
+# TODO gör den snabbare och mer effektiv (bättre lösning) 
+# alltså kanske att ascii skiten är en lista med bools eller 
+# något där man faktiskt får veta att det antingen är 0 eller 1 
+# ör att verkligen snabba upp beräkningen, kanske först därefter 
+# som man kollar färg? testa att sänka precisionen på alla matriser, 
+# man behöver ju inte tre kanaler med sådan där stor precision direkt, 
+# man kanske kan göra bit-manipulationer eller vem vet vad python kan göra
 
+# TODO gör en gemensam klass som använder siga 
 
 
 
