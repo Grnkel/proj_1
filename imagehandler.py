@@ -193,15 +193,9 @@ def testing():
 
     image.show()
 
-class Ascii(ImageHandler): # TODO gör att man kan indexera med "bokstav"
-    def __init__(self, path, ascii_matrix):   
-        ascii_dict = {
-            char: (y, x)
-            for y, row in enumerate(ascii_matrix)
-            for x, char in enumerate(row)
-        }
+class Ascii(ImageHandler):
+    def __init__(self, path, ascii_dict):   
         self.dict = ascii_dict
-        self.matrix = ascii_matrix
 
         super().__init__(path)
         super().grayscale()
@@ -218,19 +212,10 @@ class Ascii(ImageHandler): # TODO gör att man kan indexera med "bokstav"
     def __setitem__(self, key, value):
         super().__setitem__(self.dict[key], value)
 
-    def __iter__(self):
-        return super().__iter__()
-
 ascii = Ascii('chars/font12x16.png', ascii_dict)
-ascii["X"] = 0
-ascii_flat = np.squeeze(ascii.matrix)
-print(ascii_flat)
-print(ascii["X"])
 
-for x in ascii:
-    if x == ascii["X"]:
-        print(x)
-#print(ascii_dict["A"])
+for mat, key in zip(ascii, ascii_dict):
+    print("lmao", mat, ascii[key]) if (ascii[key] != mat).any() else None
 
 
 
