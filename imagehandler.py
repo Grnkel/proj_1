@@ -68,7 +68,6 @@ class ImageHandler():
         assert(ch_width>0)
 
         # resizing image to fit with slices
-
         v_slices = -(-self.dims[0] // ch_height)
         h_slices = -(-self.dims[1] // ch_width)
 
@@ -81,22 +80,12 @@ class ImageHandler():
         self.slices = v_slices, h_slices
         self.chunks = v_slices * h_slices
         self.chunk_pixels = ch_height * ch_width
-
-        #print("diffs:", diff_y, diff_x)
-        #print("slices:", "v:", v_slices, "h:", h_slices)
     
     def apply(self, cores=cpu_count(), func=None):
         shm = shared_memory.SharedMemory(create=True, size=self.image.nbytes)
         shared_mem_image = np.ndarray(self.image.shape, dtype=self.image.dtype, buffer=shm.buf)
         shared_mem_image[:] = self.image[:]
-
-        partial_func = partial(
-            self.parallel,
-            shm.name,
-            cores,
-            func,
-
-        )
+        partial_func = partial(self.parallel,shm.name,cores,func,)
 
         space = [
             (i, j)
@@ -139,14 +128,6 @@ class ImageHandler():
         
         return self.image[row, col]
     
-    def checkers(self):
-        for i in range(self.slices[0]):
-            for j in range(self.slices[1]):
-                self[i, j] = 0 if (i % 2 == 0) and (j % 2 == 0) else 255
-        return self.image
-
-
-
 # TODO lägg till färg
 # TODO gör det till video
 
