@@ -2,18 +2,11 @@ from multiprocessing import Pool, cpu_count, shared_memory
 from functools import partial
 import numpy as np
 import cv2
-import time
-import re
-
-from ascii import ascii_dict
 
 class ImageHandler():
     def __init__(self, path):
-        self.path = path
         self.image = cv2.imread(path)
         self.dims = np.shape(self.image)
-        self.chunk_dims = None, None
-        self.slices = None, None
 
     def __iter__(self):
         height, width = self.dims
@@ -70,28 +63,6 @@ class ImageHandler():
 
         self.update(im)
 
-    def fit_slices(self, v_slices=1, h_slices=1):
-        assert(v_slices>0)
-        assert(h_slices>0)
-
-        # resizing image to fit with slices
-
-        ch_height = -(-self.dims[0] // v_slices)
-        ch_width = -(-self.dims[1] // h_slices)
-
-        diff_y = -self.dims[0] % ch_height
-        diff_x = -self.dims[1] % ch_width
-
-        self.extend(diff_y, diff_x)
-
-        self.chunk_dims = ch_height, ch_width
-        self.slices = v_slices, h_slices
-        self.chunks = v_slices * h_slices
-        self.chunk_pixels = ch_height * ch_width
-
-        #print("diffs:", diff_y, diff_x)
-        #print("chunk dims:", ch_height, ch_width)
-
     def fit_chunk(self, ch_height=1, ch_width=1):
         assert(ch_height>0)
         assert(ch_width>0)
@@ -141,7 +112,7 @@ class ImageHandler():
         shm.close()
         shm.unlink()
 
-    def parallel(self, shm_name, cores, cunk_func, task):
+    def parallel(self, shm_name, cores, chunk_func, task):
         i, j = task
         shm = shared_memory.SharedMemory(name=shm_name)
         image = np.ndarray(self.image.shape, dtype=self.image.dtype, buffer=shm.buf)
@@ -155,20 +126,18 @@ class ImageHandler():
             for col in range(h_start, h_end):
                 ROW = slice(row * self.chunk_dims[0], (row + 1) * self.chunk_dims[0])
                 COL = slice(col * self.chunk_dims[1], (col + 1) * self.chunk_dims[1])
-                #res = np.sum(image[ROW, COL])/(self.chunk_dims[0]*self.chunk_dims[1])
-                image[ROW, COL] = cunk_func(row,col)
+                image[ROW, COL] = chunk_func(row,col)
 
         shm.close()
     
-    def contrast(self, k=1.0, hw=0.5, row=None, col=None):
-        if row is None or col is None:
-            raise ValueError("row and col slices must be provided")
+    def contrast(self, k, hw, row, col):
         h_ch, w_ch = self.chunk_dims
-        x = np.sum(self.image[row, col]) / (h_ch * w_ch) / 255
-        exp = np.exp(k * (x - hw))
+        x = np.sum(self.__getitem__((row, col))) / (h_ch * w_ch) / 255
+        exp = np.e**(k*(x-hw))
         sigmoid = exp / (1 + exp)
         self.image[row, col] = sigmoid * 255
-        return self.image
+        
+        return self.image[row, col]
     
     def checkers(self):
         for i in range(self.slices[0]):
@@ -176,51 +145,7 @@ class ImageHandler():
                 self[i, j] = 0 if (i % 2 == 0) and (j % 2 == 0) else 255
         return self.image
 
-class Ascii(ImageHandler):
-    def __init__(self, path, ascii_dict):   
-        self.dict = ascii_dict
 
-        super().__init__(path)
-        super().grayscale()
-        match = re.match(r"chars/font(\d+)x(\d+).png", path)
-        if match:
-            width, height = match.groups()
-            super().fit_chunk(int(height), int(width))
-        else:
-            ValueError("Invalid file")
-
-    def __getitem__(self, key):
-        return super().__getitem__(self.dict[key])
-    
-    def __setitem__(self, key, value):
-        super().__setitem__(self.dict[key], value)
-
-    def generate_list(self):
-        temp = []
-        for key in self.dict:
-            sum = np.sum(self.__getitem__(key)) / 255
-            temp.append((key,sum))
-        self.sorted = [key for key, _ in sorted(temp, key=lambda x: x[1])]
-
-    def ascii_print(self, image, row, col):
-        index = np.sum(image[row, col]) / image.chunk_pixels / 256 
-        index = self.sorted[int(index*len(self.sorted))]
-        return self.__getitem__(index)
-    
-def main():
-    image = ImageHandler('images/image3.jpg')
-    ascii = Ascii('chars/font4x6.png', ascii_dict)
-    ascii.generate_list()
-    image.grayscale()
-    height, width = ascii.chunk_dims
-    image.fit_chunk(height, width)
-
-    timer = time.perf_counter_ns()
-    image.apply(func=partial(ascii.ascii_print, image))
-    print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
-    image.show()
-
-main()
 
 # TODO lägg till färg
 # TODO gör det till video

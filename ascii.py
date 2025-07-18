@@ -1,5 +1,8 @@
 import numpy as np
 import cv2
+import re
+
+from imagehandler import ImageHandler
 
 ascii_matrix = [
     [' ', '!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.', '/'],
@@ -16,4 +19,34 @@ ascii_dict = {
     for x, char in enumerate(row)
 }
 
+class Ascii(ImageHandler):
+    def __init__(self, path):   
+        self.dict = ascii_dict
+        self.image = cv2.imread(path)
+        self.dims = np.shape(self.image)
+        super().grayscale()
+        match = re.match(r"chars/font(\d+)x(\d+).png", path)
+        if match:
+            width, height = match.groups()
+            super().fit_chunk(int(height), int(width))
+        else:
+            ValueError("Invalid file")
 
+    def __getitem__(self, key):
+        return super().__getitem__(self.dict[key])
+    
+    def __setitem__(self, key, value):
+        super().__setitem__(self.dict[key], value)
+
+    def generate_list(self):
+        temp = []
+        for key in self.dict:
+            sum = np.sum(self.__getitem__(key)) / 255
+            temp.append((key,sum))
+        self.sorted = [key for key, _ in sorted(temp, key=lambda x: x[1])]
+
+    def ascii_print(self, image, row, col):
+        index = np.sum(image[row, col]) / image.chunk_pixels / 256 
+        index = self.sorted[int(index*len(self.sorted))]
+        return self.__getitem__(index)
+    
