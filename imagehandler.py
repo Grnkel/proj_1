@@ -9,9 +9,8 @@ class ImageHandler():
         self.dims = np.shape(self.image)
 
     def __iter__(self):
-        height, width, _ = self.dims
-        for i in range(0, height, self.chunk_dims[0]):
-            for j in range(0, width, self.chunk_dims[1]):
+        for i in range(0, self.dims[0], self.chunk_dims[0]):
+            for j in range(0, self.dims[1], self.chunk_dims[1]):
                 print(self.image[i:i+self.chunk_dims[0], j:j+self.chunk_dims[1]])
                 yield self.image[i:i+self.chunk_dims[0], j:j+self.chunk_dims[1]]
 
@@ -25,7 +24,13 @@ class ImageHandler():
         i, j = index
         rows = slice(i * self.chunk_dims[0], (i + 1) * self.chunk_dims[0])
         cols = slice(j * self.chunk_dims[1], (j + 1) * self.chunk_dims[1])
-        self.image[rows, cols] = value
+        
+        if len(self.dims) >= len(np.shape(value)):
+            self.image[rows, cols] = value
+        else:
+            self.image[rows, cols] = np.mean(value,axis=2)    
+
+        
 
     def update(self, image):
         self.image = image
@@ -46,7 +51,10 @@ class ImageHandler():
         if dy > 0:
             pad_top = dy // 2
             pad_bottom = dy - pad_top
-            im = np.pad(im, ((pad_top, pad_bottom), (0, 0), (0,0)), mode='edge')
+            if len(self.dims) > 2:
+                im = np.pad(im, ((pad_top, pad_bottom), (0, 0), (0,0)), mode='edge')
+            else:
+                im = np.pad(im, ((pad_top, pad_bottom), (0, 0)), mode='edge')
         elif dy < 0:
             crop_top = -dy // 2
             crop_bottom = -dy - crop_top
@@ -56,7 +64,10 @@ class ImageHandler():
         if dx > 0:
             pad_left = dx // 2
             pad_right = dx - pad_left
-            im = np.pad(im, ((0, 0), (pad_left, pad_right), (0,0)), mode='edge')
+            if len(self.dims) > 2:
+                im = np.pad(im, ((0, 0), (pad_left, pad_right), (0,0)), mode='edge')
+            else:
+                im = np.pad(im, ((0, 0), (pad_left, pad_right)), mode='edge')
         elif dx < 0:
             crop_left = -dx // 2
             crop_right = -dx - crop_left
