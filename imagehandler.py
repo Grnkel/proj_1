@@ -151,9 +151,3 @@ class ImageHandler():
 # man kanske kan göra bit-manipulationer eller vem vet vad python kan göra
 
 # TODO gör en gemensam klass som använder siga 
-
-
-
-
-
-    

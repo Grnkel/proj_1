@@ -10,7 +10,7 @@ def custom(image,ascii,row,col):
 
 def main():
     image = ImageHandler('images/image4.jpg')
-    ascii = Ascii('chars/font12x16.png')
+    ascii = Ascii('chars/font4x6.png')
     ascii.generate_list()
     
     height, width = ascii.chunk_dims
