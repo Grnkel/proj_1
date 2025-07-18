@@ -41,16 +41,14 @@ class Ascii(ImageHandler):
     def generate_list(self):
         temp = []
         for key in self.dict:
-            sum = np.sum(self.__getitem__(key)) / 255
+            sum = np.sum(self.__getitem__(key)) / 256
             temp.append((key,sum))
         self.sorted = [key for key, _ in sorted(temp, key=lambda x: x[1])]
 
     def ascii_print(self, image, row, col):
         index = np.sum(image[row, col]) / image.chunk_pixels / 256 / 3
         index = self.sorted[int(index*len(self.sorted))]
-        
-        avg_color = np.mean(image[row,col],axis=(0,1)) /256
-        print(avg_color) 
-        
+        avg_color = np.mean(image[row,col],axis=(0,1)) /256       
         return self.__getitem__(index) * avg_color
+
     

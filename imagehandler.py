@@ -5,13 +5,12 @@ import cv2
 
 class ImageHandler():
     def __init__(self, path):
-        self.image = cv2.imread(path)
+        self.image = cv2.imread(path, cv2.IMREAD_UNCHANGED)
         self.dims = np.shape(self.image)
 
     def __iter__(self):
         for i in range(0, self.dims[0], self.chunk_dims[0]):
             for j in range(0, self.dims[1], self.chunk_dims[1]):
-                print(self.image[i:i+self.chunk_dims[0], j:j+self.chunk_dims[1]])
                 yield self.image[i:i+self.chunk_dims[0], j:j+self.chunk_dims[1]]
 
     def __getitem__(self, index):
@@ -141,7 +140,6 @@ class ImageHandler():
         return self.image[row, col]
 
     
-# TODO lägg till färg
 # TODO gör det till video
 
 # TODO gör den snabbare och mer effektiv (bättre lösning) 

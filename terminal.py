@@ -1,0 +1,1 @@
+# TODO gör faktiskt en funktion som kan printa ut till terminalen

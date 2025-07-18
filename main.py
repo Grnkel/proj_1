@@ -9,10 +9,10 @@ def custom(image,ascii,row,col):
     return image[row,col]
 
 def main():
-    image = ImageHandler('images/image1.jpg')
-    ascii = Ascii('chars/font7x12.png')
+    image = ImageHandler('images/image4.jpg')
+    ascii = Ascii('chars/font12x16.png')
     ascii.generate_list()
-    image.grayscale() 
+    
     height, width = ascii.chunk_dims
     image.fit_chunk(height, width)
 
