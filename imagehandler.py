@@ -9,9 +9,10 @@ class ImageHandler():
         self.dims = np.shape(self.image)
 
     def __iter__(self):
-        height, width = self.dims
+        height, width, _ = self.dims
         for i in range(0, height, self.chunk_dims[0]):
             for j in range(0, width, self.chunk_dims[1]):
+                print(self.image[i:i+self.chunk_dims[0], j:j+self.chunk_dims[1]])
                 yield self.image[i:i+self.chunk_dims[0], j:j+self.chunk_dims[1]]
 
     def __getitem__(self, index):
@@ -45,7 +46,7 @@ class ImageHandler():
         if dy > 0:
             pad_top = dy // 2
             pad_bottom = dy - pad_top
-            im = np.pad(im, ((pad_top, pad_bottom), (0, 0)), mode='edge')
+            im = np.pad(im, ((pad_top, pad_bottom), (0, 0), (0,0)), mode='edge')
         elif dy < 0:
             crop_top = -dy // 2
             crop_bottom = -dy - crop_top
@@ -55,7 +56,7 @@ class ImageHandler():
         if dx > 0:
             pad_left = dx // 2
             pad_right = dx - pad_left
-            im = np.pad(im, ((0, 0), (pad_left, pad_right)), mode='edge')
+            im = np.pad(im, ((0, 0), (pad_left, pad_right), (0,0)), mode='edge')
         elif dx < 0:
             crop_left = -dx // 2
             crop_right = -dx - crop_left
@@ -120,13 +121,14 @@ class ImageHandler():
         shm.close()
     
     def contrast(self, k, hw, row, col):
-        h_ch, w_ch = self.chunk_dims
-        x = np.sum(self.__getitem__((row, col))) / (h_ch * w_ch) / 255
-        exp = np.e**(k*(x-hw))
+        chunk = self.__getitem__((row, col))
+        avg = np.mean(chunk, axis=(0, 1)) / 255
+        exp = np.exp(k * (avg - hw))
         sigmoid = exp / (1 + exp)
-        self.image[row, col] = sigmoid * 255
-        
+        new_values = (sigmoid * 255)
+        self.image[row, col] = new_values
         return self.image[row, col]
+
     
 # TODO lägg till färg
 # TODO gör det till video

@@ -24,7 +24,7 @@ class Ascii(ImageHandler):
         self.dict = ascii_dict
         self.image = cv2.imread(path)
         self.dims = np.shape(self.image)
-        super().grayscale()
+        
         match = re.match(r"chars/font(\d+)x(\d+).png", path)
         if match:
             width, height = match.groups()
@@ -46,7 +46,11 @@ class Ascii(ImageHandler):
         self.sorted = [key for key, _ in sorted(temp, key=lambda x: x[1])]
 
     def ascii_print(self, image, row, col):
-        index = np.sum(image[row, col]) / image.chunk_pixels / 256 
+        index = np.sum(image[row, col]) / image.chunk_pixels / 256 / 3
         index = self.sorted[int(index*len(self.sorted))]
-        return self.__getitem__(index)
+        
+        avg_color = np.mean(image[row,col],axis=(0,1)) /256
+        print(avg_color) 
+        
+        return self.__getitem__(index) * avg_color
     
