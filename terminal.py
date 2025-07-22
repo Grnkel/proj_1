@@ -9,7 +9,6 @@ class TerminalHandler(ImageHandler):
         super().__init__(path)
 
         self.ascii = Ascii("chars/font12x16.png") 
-        # TODO kolla hur mycket space (v och h som finns och ta mindre och mindre chars
         self.ascii.generate_list()
         height, width = self.ascii.chunk_dims
         
@@ -20,7 +19,7 @@ class TerminalHandler(ImageHandler):
         h_slices = -(-self.dims[1] // width)
         y_diff = (size.lines - v_slices) * height
         x_diff = (size.columns - h_slices) * width
-        self.extend(np.min((y_diff,0)), x_diff)      
+        self.extend(np.min((y_diff,0)), np.min((x_diff,0)))      
 
         self.fit_chunk(height, width)    
         v_slices, h_slices = self.slices    
@@ -42,17 +41,28 @@ class TerminalHandler(ImageHandler):
 def main():
     terminal = TerminalHandler('images/image1.jpg')
 
-    if False:
+    GRAY = True
+    GRAY = False
+    if GRAY:
         terminal.grayscale().apply(func=partial(terminal.contrast,15,0.5))
     else:
-        terminal.apply(func=partial(terminal.contrast,10,0.5))
+        terminal.apply(func=partial(terminal.contrast,12,0.5))
+        pass
 
-    terminal.show()
     terminal.to_terminal()
 
-    
 main()
-    
 
+# TODO kolla hur mycket space (v och h som finns och ta mindre och mindre chars
+# TODO skapa funktionalitet för videos
 
-# TODO gör faktiskt en funktion som kan printa ut till terminalen
+# TODO gör den snabbare och mer effektiv (bättre lösning) 
+# alltså kanske att ascii skiten är en lista med bools eller 
+# något där man faktiskt får veta att det antingen är 0 eller 1 
+# ör att verkligen snabba upp beräkningen, kanske först därefter 
+# som man kollar färg? testa att sänka precisionen på alla matriser, 
+# man behöver ju inte tre kanaler med sådan där stor precision direkt, 
+# man kanske kan göra bit-manipulationer eller vem vet vad python kan göra
+
+# TODO ta in streams från din webcam
+# TODO varför är det 256 överallt!?

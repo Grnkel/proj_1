@@ -4,17 +4,16 @@ from ascii import Ascii
 import time
 
 def custom(image,ascii,row,col):
-    image[row,col] = image.contrast(10,0.6,row,col)
+    #image[row,col] = image.contrast(10,0.6,row,col)
     image[row,col] = ascii.ascii_print(image,row,col)
     return image[row,col]
 
 def main():
-    image = ImageHandler('images/image4.jpg')
+    image = ImageHandler('images/image1.jpg')
     ascii = Ascii('chars/font4x6.png')
     ascii.generate_list()
     
     height, width = ascii.chunk_dims
-    image.extend(0,-100)
     image.fit_chunk(height, width)
 
     timer = time.perf_counter_ns()

@@ -142,16 +142,3 @@ class ImageHandler():
         new_values = (sigmoid * 255)
         self.image[row, col] = new_values
         return self.image[row, col]
-
-    
-# TODO gör det till video
-
-# TODO gör den snabbare och mer effektiv (bättre lösning) 
-# alltså kanske att ascii skiten är en lista med bools eller 
-# något där man faktiskt får veta att det antingen är 0 eller 1 
-# ör att verkligen snabba upp beräkningen, kanske först därefter 
-# som man kollar färg? testa att sänka precisionen på alla matriser, 
-# man behöver ju inte tre kanaler med sådan där stor precision direkt, 
-# man kanske kan göra bit-manipulationer eller vem vet vad python kan göra
-
-# TODO gör en gemensam klass som använder siga 
