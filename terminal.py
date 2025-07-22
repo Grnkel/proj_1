@@ -1,7 +1,8 @@
 import os
-from imagehandler import ImageHandler
+from image import ImageHandler
 import numpy as np
 from ascii import Ascii
+from functools import partial
 
 # Get terminal size
 size = os.get_terminal_size()
@@ -21,14 +22,32 @@ class TerminalHandler(ImageHandler):
         # TODO fixa skiten så den är automatisk!
         self.ascii = Ascii("chars/font12x16.png")
         self.ascii.generate_list()
+        
+        super().__init__(path)
+        height, width = self.ascii.chunk_dims
+        self.fit_chunk(height, width)
+        print(self.chunks)
+        print(self.slices)
+            
+        v_slices, h_slices = self.slices
+        self.matrix = np.full((v_slices, h_slices) , '', dtype='<U1') 
 
-        self.matrix = np.arange()
-        for chunk in super().__iter__():
-            print(chunk)
+        for i,j,chunk in super().__iter__():
+            index = np.sum(chunk) / self.chunk_pixels / 256 / 3
+            char = self.ascii.sorted[int(index*len(self.ascii.sorted))]
+            self.matrix[i][j] = char
+    
+    def to_terminal(self):
+        os.system('clear')
+        for row in self.matrix:
+            print(' '.join(row))
 
 def main():
-    image = ImageHandler('images/image4.jpg')
-    ascii = Ascii('chars/font4x6.png')
+    terminal = TerminalHandler('images/image1.jpg')
+    terminal.apply(func=partial(terminal.contrast,1,0.5))
+    terminal.show()
+    terminal.to_terminal()
+
     
 main()
     

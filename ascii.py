@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import re
 
-from imagehandler import ImageHandler
+from image import ImageHandler
 
 ascii_matrix = [
     [' ', '!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.', '/'],

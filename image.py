@@ -5,13 +5,14 @@ import cv2
 
 class ImageHandler():
     def __init__(self, path):
-        self.image = cv2.imread(path, cv2.IMREAD_UNCHANGED)
-        self.dims = np.shape(self.image)
+        image = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+        self.image = image
+        self.dims = np.shape(image)
 
     def __iter__(self):
-        for i in range(0, self.dims[0], self.chunk_dims[0]):
-            for j in range(0, self.dims[1], self.chunk_dims[1]):
-                yield self.image[i:i+self.chunk_dims[0], j:j+self.chunk_dims[1]]
+        for i in range(self.dims[0] // self.chunk_dims[0]):
+            for j in range(self.dims[1] // self.chunk_dims[1]):
+                yield i, j, self.__getitem__((i, j))
 
     def __getitem__(self, index):
         i, j = index
@@ -27,9 +28,7 @@ class ImageHandler():
         if len(self.dims) >= len(np.shape(value)):
             self.image[rows, cols] = value
         else:
-            self.image[rows, cols] = np.mean(value,axis=2)    
-
-        
+            self.image[rows, cols] = np.mean(value,axis=2)
 
     def update(self, image):
         self.image = image
@@ -71,7 +70,7 @@ class ImageHandler():
             crop_left = -dx // 2
             crop_right = -dx - crop_left
             im = im[:, crop_left:- crop_right]
-
+        
         self.update(im)
 
     def fit_chunk(self, ch_height=1, ch_width=1):

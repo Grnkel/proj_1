@@ -1,4 +1,4 @@
-from imagehandler import ImageHandler
+from image import ImageHandler
 from functools import partial
 from ascii import Ascii
 import time
