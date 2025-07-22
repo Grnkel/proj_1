@@ -41,6 +41,7 @@ class ImageHandler():
 
     def grayscale(self):
         self.update(cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY))
+        return self
 
     def extend(self, dy=0, dx=0):
         im = self.image
@@ -90,6 +91,8 @@ class ImageHandler():
         self.slices = v_slices, h_slices
         self.chunks = v_slices * h_slices
         self.chunk_pixels = ch_height * ch_width
+
+        return self
     
     def apply(self, cores=cpu_count(), func=None):
         shm = shared_memory.SharedMemory(create=True, size=self.image.nbytes)
@@ -110,6 +113,8 @@ class ImageHandler():
         self.image = shared_mem_image.copy()
         shm.close()
         shm.unlink()
+
+        return self
 
     def parallel(self, shm_name, cores, chunk_func, task):
         i, j = task

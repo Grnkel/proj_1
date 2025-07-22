@@ -14,6 +14,7 @@ def main():
     ascii.generate_list()
     
     height, width = ascii.chunk_dims
+    image.extend(0,-100)
     image.fit_chunk(height, width)
 
     timer = time.perf_counter_ns()
