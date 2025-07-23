@@ -36,7 +36,7 @@ class GifHandler(ImageHandler):
             self.dims = np.shape(image)
             timer = time.perf_counter_ns()
             super().apply(cores,funcs[i])
-            print(i,"time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
+            print(i,"\ttime taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
             self.sequence[i] = self.image
         return self
     
@@ -58,11 +58,11 @@ def main():
     ascii.generate_list()
     height, width = ascii.chunk_dims    
 
-    gif = GifHandler('gifs/gif2.gif')    
+    gif = GifHandler('gifs/gif1.gif')    
     gif.fit_chunk(height, width)
-    gif.sequence = np.array(gif.sequence)[range(0,len(gif.sequence),1)]
+    gif.sequence = np.array(gif.sequence)[range(0,len(gif.sequence),5)]
     funcs = [partial(ascii.ascii_print, image) for image in gif.sequence]
-    gif.apply(funcs=funcs)
+    gif.apply(cores=1,funcs=funcs)
     gif.show()
 
 main()

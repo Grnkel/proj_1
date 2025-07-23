@@ -48,6 +48,7 @@ main1()
 # TODO ta in streams från din webcam
 # TODO varför är det 256 överallt!?
 # TODO ta bort dims och överflödiga saker
+# TODO något är verkligen fel med hur processorn fixar multicore
 
 
 
