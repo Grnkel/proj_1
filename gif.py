@@ -3,15 +3,17 @@ import numpy as np
 import cv2
 from image import ImageHandler
 from ascii import Ascii
+from functools import partial
 import os
-
+from multiprocessing import cpu_count
+from terminal import TerminalHandler
+import time
 
 class GifHandler(ImageHandler):
     def __init__(self, path):
         sequence = [cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) 
                     for frame in imageio.mimread(path)]
         self.sequence = sequence
-        self.shape = (len(self.sequence),) + np.shape(self.sequence[0])
         self.dims = np.shape(self.sequence[0])
 
     def __iter__(self):
@@ -28,27 +30,39 @@ class GifHandler(ImageHandler):
             self.sequence[i] = self.image 
         return self
     
+    def apply(self, cores=cpu_count(), funcs=None):
+        for i, image in enumerate(self.sequence):
+            self.image = image
+            self.dims = np.shape(image)
+            timer = time.perf_counter_ns()
+            super().apply(cores,funcs[i])
+            print(i,"time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
+            self.sequence[i] = self.image
+        return self
+    
     def show(self):
-        frames = 30
+        frames = 30 / 5
         i = 0
         while True:
             frame = self.sequence[i % len(self.sequence)]
             cv2.imshow("GIF", frame)
-            if cv2.waitKey(1000 // frames) & 0xFF == ord('q'):
+            if cv2.waitKey(int(1000 // frames)) & 0xFF == ord('q'):
                 break
-
             i += 1
-
         cv2.destroyAllWindows()
 
 def main():
     os.system('clear')
 
-    ascii = Ascii('chars/font12x16.png')
+    ascii = Ascii('chars/font4x6.png')
+    ascii.generate_list()
     height, width = ascii.chunk_dims    
-    gif = GifHandler('gifs/gif1.gif')
+
+    gif = GifHandler('gifs/gif2.gif')    
     gif.fit_chunk(height, width)
-    print(gif.shape)
+    gif.sequence = np.array(gif.sequence)[range(0,len(gif.sequence),1)]
+    funcs = [partial(ascii.ascii_print, image) for image in gif.sequence]
+    gif.apply(funcs=funcs)
     gif.show()
 
 main()
