@@ -10,6 +10,7 @@ class ImageHandler():
         self.dims = np.shape(image)
 
     def __iter__(self):
+        # chunk dims must exist
         for i in range(self.dims[0] // self.chunk_dims[0]):
             for j in range(self.dims[1] // self.chunk_dims[1]):
                 yield i, j, self.__getitem__((i, j))
