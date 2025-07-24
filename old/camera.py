@@ -30,15 +30,15 @@ class ThreadedCamera:
         self.thread.join()
         self.cap.release()
 
-    def pixelate(self, img, pixel_size=16):
+    def downscale(self, img, p_width=1, p_height=1):
         height, width = img.shape[:2]
 
         # Calculate size of the downscaled image
-        w, h = width // pixel_size, height // pixel_size
+        w, h = width // p_width, height // p_height
 
         # Resize small and then scale back up
         temp = cv2.resize(img, (w, h), interpolation=cv2.INTER_LINEAR)
-        return cv2.resize(temp, (width, height), interpolation=cv2.INTER_NEAREST)
+        return temp
 
 
 # Usage example
@@ -49,7 +49,7 @@ def main():
         ret, frame = cam.read()
         if not ret:
             break
-        frame = cam.pixelate(frame, 16)
+        frame = cam.downscale(frame, 4,4)
 
         # Process the frame here (e.g., pixelate, detect faces, etc)
         cv2.imshow('Threaded Camera', frame)

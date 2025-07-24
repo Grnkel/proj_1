@@ -6,7 +6,7 @@ from ascii import Ascii
 from functools import partial
 import os
 from multiprocessing import cpu_count
-from terminal import TerminalHandler
+from old.terminal import TerminalHandler
 import time
 
 class GifHandler(ImageHandler):

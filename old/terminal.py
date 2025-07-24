@@ -1,7 +1,6 @@
 import os
 import numpy as np
 from ascii import Ascii
-from functools import partial
 from image import ImageHandler
 
 class TerminalHandler(ImageHandler):

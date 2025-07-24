@@ -13,7 +13,7 @@ def main1():
     image.fit_chunk(height, width)
 
     timer = time.perf_counter_ns()
-    image.apply(func=partial(ascii.ascii_print, image.image))
+    image.apply(cores=1,func=partial(ascii.ascii_print, image.image))
     print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
     image.show()
 
