@@ -13,24 +13,25 @@ def main1():
     image.fit_chunk(height, width)
 
     timer = time.perf_counter_ns()
-    image.apply(cores=1,func=partial(ascii.ascii_print, image.image))
+    image.apply(ascii.ascii_print)
     print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
+
     image.show()
 
 def main2():
-    terminal = TerminalHandler('images/image1.jpg')
-
+    image = ImageHandler('images/image1.jpg')
+    ascii = Ascii('chars/font4x6.png')
+    ascii.generate_list()
+    term = TerminalHandler('images/image1.jpg')
+    
+    height, width = ascii.chunk_dims
+    image.fit_chunk(height, width)
+    
     timer = time.perf_counter_ns()
-    GRAY = True
-    GRAY = False
-    if GRAY:
-        terminal.grayscale().apply(func=partial(terminal.contrast,15,0.5))
-    else:
-        terminal.apply(func=partial(terminal.contrast,12,0.5))
-        pass
-
-    terminal.to_terminal()
+    image.apply()
     print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
+
+    image.show()
 
 main1()
 

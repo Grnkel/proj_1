@@ -5,35 +5,26 @@ import cv2
 
 class ImageHandler():
     def __init__(self, path):
-        image = cv2.imread(path, cv2.IMREAD_UNCHANGED)
-        self.image = image
-        self.dims = np.shape(image)
+        self.image = cv2.imread(path, cv2.IMREAD_UNCHANGED)
 
     def __iter__(self):
-        # chunk dims must exist
-        for i in range(self.dims[0] // self.chunk_dims[0]):
-            for j in range(self.dims[1] // self.chunk_dims[1]):
-                yield i, j, self.__getitem__((i, j))
+        for i in range(self.slices[0]):
+            for j in range(self.slices[1]):
+                yield partial(self.__setitem__, (i,j)), self.__getitem__((i, j))
+
+    def _index(self, index):
+        row, col = index
+        rows = slice(row * self.chunk_dims[0], (row + 1) * self.chunk_dims[0])
+        cols = slice(col * self.chunk_dims[1], (col + 1) * self.chunk_dims[1])
+        return rows, cols
 
     def __getitem__(self, index):
-        i, j = index
-        rows = slice(i * self.chunk_dims[0], (i + 1) * self.chunk_dims[0])
-        cols = slice(j * self.chunk_dims[1], (j + 1) * self.chunk_dims[1])
+        rows, cols = self._index(index)
         return self.image[rows, cols]
-    
+      
     def __setitem__(self, index, value):
-        i, j = index
-        rows = slice(i * self.chunk_dims[0], (i + 1) * self.chunk_dims[0])
-        cols = slice(j * self.chunk_dims[1], (j + 1) * self.chunk_dims[1])
-        
-        if len(self.dims) >= len(np.shape(value)):
-            self.image[rows, cols] = value
-        else:
-            self.image[rows, cols] = np.mean(value,axis=2)
-
-    def update(self, image):
-        self.image = image
-        self.dims = np.shape(self.image)
+        rows, cols = self._index(index)        
+        self.image[rows, cols] = value
 
     def show(self):
         cv2.imshow('', self.image)
@@ -51,7 +42,7 @@ class ImageHandler():
         if dy > 0:
             pad_top = dy // 2
             pad_bottom = dy - pad_top
-            if len(self.dims) > 2:
+            if len(np.shape(self.image)) > 2:
                 im = np.pad(im, ((pad_top, pad_bottom), (0, 0), (0,0)), mode='edge')
             else:
                 im = np.pad(im, ((pad_top, pad_bottom), (0, 0)), mode='edge')
@@ -64,7 +55,7 @@ class ImageHandler():
         if dx > 0:
             pad_left = dx // 2
             pad_right = dx - pad_left
-            if len(self.dims) > 2:
+            if len(np.shape(self.image)) > 2:
                 im = np.pad(im, ((0, 0), (pad_left, pad_right), (0,0)), mode='edge')
             else:
                 im = np.pad(im, ((0, 0), (pad_left, pad_right)), mode='edge')
@@ -73,18 +64,18 @@ class ImageHandler():
             crop_right = -dx - crop_left
             im = im[:, crop_left:- crop_right]
         
-        self.update(im)
+        self.image = im
 
     def fit_chunk(self, ch_height=1, ch_width=1):
         assert(ch_height>0)
         assert(ch_width>0)
 
         # resizing image to fit with slices
-        v_slices = -(-self.dims[0] // ch_height)
-        h_slices = -(-self.dims[1] // ch_width)
+        v_slices = -(-np.shape(self.image)[0] // ch_height)
+        h_slices = -(-np.shape(self.image)[1] // ch_width)
 
-        diff_y = ch_height * v_slices - self.dims[0]
-        diff_x = ch_width * h_slices - self.dims[1]
+        diff_y = ch_height * v_slices - np.shape(self.image)[0]
+        diff_x = ch_width * h_slices - np.shape(self.image)[1]
 
         self.extend(diff_y, diff_x)
 
@@ -94,47 +85,24 @@ class ImageHandler():
         self.chunk_pixels = ch_height * ch_width
 
         return self
-    
-    def apply(self, cores=cpu_count(), func=None):
-        shm = shared_memory.SharedMemory(create=True, size=self.image.nbytes)
-        shared_mem_image = np.ndarray(self.image.shape, dtype=self.image.dtype, buffer=shm.buf)
-        shared_mem_image[:] = self.image[:]
-        partial_func = partial(self.parallel,shm.name,cores,func,)
 
-        space = [
-            (i, j)
-            for i in range(self.slices[0])
-            for j in range(cores)
-        ]
+    def temp(self):
+        h, w = np.shape(self.image)[:2]
+        ch, cw = self.chunk_dims
+        new_h, new_w = h // ch, w // cw
+        self.frame = cv2.resize(
+            self.frame, 
+            )
+        
+        downscale = cv2.resize(
+            self.image, 
+            (new_w, new_h), 
+            interpolation=cv2.INTER_NEAREST)
+        
+    def apply(self, func):
+        for setter, chunk in self.__iter__():
+            setter(func(chunk))
 
-        with Pool(processes=cores) as pool:
-            pool.map(partial_func, space)
-
-        # read back
-        self.image = shared_mem_image.copy()
-        shm.close()
-        shm.unlink()
-
-        return self
-
-    def parallel(self, shm_name, cores, chunk_func, task):
-        i, j = task
-        shm = shared_memory.SharedMemory(name=shm_name)
-        image = np.ndarray(self.image.shape, dtype=self.image.dtype, buffer=shm.buf)
-
-        v_start = int(np.ceil(i))
-        v_end = int(np.ceil((i + 1)))
-        h_start = int(np.ceil(j * self.slices[1] / cores))
-        h_end = int(np.ceil((j + 1) * self.slices[1] / cores))
-
-        for row in range(v_start, v_end):
-            for col in range(h_start, h_end):
-                ROW = slice(row * self.chunk_dims[0], (row + 1) * self.chunk_dims[0])
-                COL = slice(col * self.chunk_dims[1], (col + 1) * self.chunk_dims[1])
-                image[ROW, COL] = chunk_func(row,col)
-
-        shm.close()
-    
     def contrast(self, k, hw, row, col):
         chunk = self.__getitem__((row, col))
         avg = np.mean(chunk, axis=(0, 1)) / 255

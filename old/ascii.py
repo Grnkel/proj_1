@@ -45,13 +45,10 @@ class Ascii(ImageHandler):
             temp.append((key,sum))
         self.sorted = [key for key, _ in sorted(temp, key=lambda x: x[1])]
 
-    def ascii_print(self, image, row, col):
-        rows = slice(row * self.chunk_dims[0], (row + 1) * self.chunk_dims[0])
-        cols = slice(col * self.chunk_dims[1], (col + 1) * self.chunk_dims[1])
-        im = image[rows,cols]
-        index = np.mean(im) / 256
+    def ascii_print(self, chunk):
+        index = np.mean(chunk) / 255
         index = self.sorted[int(index*len(self.sorted))]
-        avg_color = np.mean(im,axis=(0,1)) / 256       
-        return self.__getitem__(index) * avg_color
+        avg_color = np.mean(chunk,axis=(0,1)) / 255  
+        return self.__getitem__(index) * avg_color  
 
     
