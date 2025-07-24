@@ -13,31 +13,31 @@ class GifHandler(ImageHandler):
         sequence = [cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) 
                     for frame in imageio.mimread(path)]
         self.sequence = sequence
-        self.dims = np.shape(self.sequence[0])
 
     def __iter__(self):
-        for frame in self.sequence:
+        for frame in range(len(self.sequence)):
             self.image = frame
-            self.dims = np.shape(frame)
-            yield from super().__iter__()
+            for i in range(self.slices[0]):
+                for j in range(self.slices[1]):
+                    yield (i,j), self.__getitem__((i, j))
 
     def fit_chunk(self, chunk_dims):
-        for i, image in enumerate(self.sequence):
-            self.image = image
-            self.dims = np.shape(image)
+        for i, frame in enumerate(self.sequence):
+            self.image = frame
             super().fit_chunk(chunk_dims)
             self.sequence[i] = self.image 
         return self
     
+    def grayscale(self):
+        for i, frame in enumerate(self.sequence):
+            self.sequence[i] = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        return super().grayscale()
+    
     def apply(self, func):
-        for i, image in enumerate(self.sequence):
-            self.image = image
-            self.dims = np.shape(image)
-            timer = time.perf_counter_ns()
+        for i, frame in enumerate(self.sequence):
+            self.image = frame
             super().apply(func)
-            print(i,"\ttime taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
             self.sequence[i] = self.image
-        return self
     
     def show(self):
         frames = 30
@@ -51,19 +51,19 @@ class GifHandler(ImageHandler):
         cv2.destroyAllWindows()
 
 def main():
-    os.system('clear')
-
     ascii = Ascii('chars/font4x6.png')
     ascii.generate_list()
 
     gif = GifHandler('gifs/gif1.gif')    
     gif.fit_chunk(ascii.chunk_dims)
+    gif.grayscale()
     
     #gif.sequence = np.array(gif.sequence)[range(0,len(gif.sequence),20)]
-    gif.sequence = np.array(gif.sequence)
-    np.shape(gif.sequence)
+    #gif.sequence = np.array(gif.sequence)[range(0,len(gif.sequence),10)]
     #gif.apply(ascii.ascii_print)
     gif.show()
 
-main()
+if __name__ == "__main__":
+    os.system('clear')
+    main()
 
