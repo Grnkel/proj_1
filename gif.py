@@ -21,6 +21,11 @@ class GifHandler(ImageHandler):
                 for j in range(self.slices[1]):
                     yield (i,j), self.__getitem__((i, j))
 
+    def __getitem__(self, index):
+        x,y,z = index
+        self.image = self.sequence[x]
+        return super().__getitem__((y,z))
+
     def fit_chunk(self, chunk_dims):
         for i, frame in enumerate(self.sequence):
             self.image = frame
@@ -49,21 +54,4 @@ class GifHandler(ImageHandler):
                 break
             i += 1
         cv2.destroyAllWindows()
-
-def main():
-    ascii = Ascii('chars/font4x6.png')
-    ascii.generate_list()
-
-    gif = GifHandler('gifs/gif1.gif')    
-    gif.fit_chunk(ascii.chunk_dims)
-    gif.grayscale()
-    
-    #gif.sequence = np.array(gif.sequence)[range(0,len(gif.sequence),20)]
-    #gif.sequence = np.array(gif.sequence)[range(0,len(gif.sequence),10)]
-    #gif.apply(ascii.ascii_print)
-    gif.show()
-
-if __name__ == "__main__":
-    os.system('clear')
-    main()
 

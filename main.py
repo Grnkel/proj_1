@@ -1,13 +1,17 @@
 from image import ImageHandler
 from terminal import TerminalHandler
+from gif import GifHandler
+
 from functools import partial
 from ascii import Ascii
 import time
+import numpy as np
 import os
 
+
 def cv2():
-    image = ImageHandler('images/image1.jpg')
-    ascii = Ascii('chars/font4x6.png')
+    image = ImageHandler("images/image1.jpg")
+    ascii = Ascii("chars/font4x6.png")
     image.fit_chunk(ascii.chunk_dims)
 
     # testing
@@ -17,32 +21,40 @@ def cv2():
 
     image.show()
 
+
+def term():
+    import time
+    from functools import partial
+
+    term = TerminalHandler("images/image1.jpg")
+
+    # testing
+    timer = time.perf_counter_ns()
+    term.apply(partial(term.contrast, 11, 0.5))
+    term.to_terminal()
+    print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
+
+
+def gif():
+    ascii = Ascii("chars/font4x6.png")
+
+    gif = GifHandler("gifs/gif1.gif")
+    gif.fit_chunk(ascii.chunk_dims)
+
+    print(gif[0,0,0])
+
+    # gif.sequence = np.array(gif.sequence)[range(0,len(gif.sequence),20)]
+    gif.sequence = np.array(gif.sequence)[range(0, len(gif.sequence), 10)]
+    gif.apply(ascii.ascii_print)
+    gif.show()
+
+
 def main():
+    term()
     cv2()
+    gif()
+
 
 if __name__ == "__main__":
-    os.system('clear')
+    os.system("clear")
     main()
-    
-
-
-# TODO kolla hur mycket space (v och h som finns och ta mindre och mindre chars
-# TODO skapa funktionalitet för videos
-
-# TODO gör den snabbare och mer effektiv (bättre lösning) 
-# alltså kanske att ascii skiten är en lista med bools eller 
-# något där man faktiskt får veta att det antingen är 0 eller 1 
-# ör att verkligen snabba upp beräkningen, kanske först därefter 
-# som man kollar färg? testa att sänka precisionen på alla matriser, 
-# man behöver ju inte tre kanaler med sådan där stor precision direkt, 
-# man kanske kan göra bit-manipulationer eller vem vet vad python kan göra
-
-# TODO ta in streams från din webcam
-# TODO varför är det 256 överallt!?
-# TODO ta bort dims och överflödiga saker
-# TODO något är verkligen fel med hur processorn fixar multicore
-# TODO den ska reglera hur små ascii symboler den kan använda för att få maximal resolution
-
-
-
-

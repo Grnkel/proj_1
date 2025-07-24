@@ -41,25 +41,3 @@ class TerminalHandler(ImageHandler):
 
         for row in self.matrix:
             print("".join(row))
-
-
-def term():
-    import time
-    from functools import partial
-
-    term = TerminalHandler("images/image1.jpg")
-
-    # testing
-    timer = time.perf_counter_ns()
-    term.apply(partial(term.contrast, 11, 0.5))
-    term.to_terminal()
-    print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
-
-
-def main():
-    term()
-
-
-if __name__ == "__main__":
-    os.system("clear")
-    main()
