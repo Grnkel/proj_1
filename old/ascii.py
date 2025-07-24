@@ -28,7 +28,7 @@ class Ascii(ImageHandler):
         match = re.match(r"chars/font(\d+)x(\d+).png", path)
         if match:
             width, height = match.groups()
-            super().fit_chunk(int(height), int(width))
+            super().fit_chunk((int(height), int(width)))
         else:
             ValueError("Invalid file")
 

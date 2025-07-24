@@ -3,8 +3,9 @@ from terminal import TerminalHandler
 from functools import partial
 from ascii import Ascii
 import time
+import os
 
-def main1():
+def cv2():
     image = ImageHandler('images/image1.jpg')
     ascii = Ascii('chars/font4x6.png')
     ascii.generate_list()
@@ -13,27 +14,31 @@ def main1():
     image.fit_chunk(height, width)
 
     timer = time.perf_counter_ns()
+    image.apply(partial(image.contrast, 10, 0.5))
     image.apply(ascii.ascii_print)
     print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
 
     image.show()
 
-def main2():
-    image = ImageHandler('images/image1.jpg')
+def term():
     ascii = Ascii('chars/font4x6.png')
     ascii.generate_list()
     term = TerminalHandler('images/image1.jpg')
     
-    height, width = ascii.chunk_dims
-    image.fit_chunk(height, width)
-    
     timer = time.perf_counter_ns()
-    image.apply()
+    term.apply(partial(term.contrast, 10, 0.5))
+    term.to_terminal()
     print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
 
-    image.show()
+def main():
+    cv2()
+    term()
 
-main1()
+if __name__ == "__main__":
+    os.system('clear')
+    main()
+    
+
 
 # TODO kolla hur mycket space (v och h som finns och ta mindre och mindre chars
 # TODO skapa funktionalitet för videos

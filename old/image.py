@@ -10,7 +10,7 @@ class ImageHandler():
     def __iter__(self):
         for i in range(self.slices[0]):
             for j in range(self.slices[1]):
-                yield partial(self.__setitem__, (i,j)), self.__getitem__((i, j))
+                yield (i,j), self.__getitem__((i, j))
 
     def _index(self, index):
         row, col = index
@@ -66,19 +66,13 @@ class ImageHandler():
         
         self.image = im
 
-    def fit_chunk(self, ch_height=1, ch_width=1):
-        assert(ch_height>0)
-        assert(ch_width>0)
-
-        # resizing image to fit with slices
+    def fit_chunk(self, chunk_dims=(1,1)):
+        ch_height, ch_width = chunk_dims
         v_slices = -(-np.shape(self.image)[0] // ch_height)
         h_slices = -(-np.shape(self.image)[1] // ch_width)
-
         diff_y = ch_height * v_slices - np.shape(self.image)[0]
         diff_x = ch_width * h_slices - np.shape(self.image)[1]
-
         self.extend(diff_y, diff_x)
-
         self.chunk_dims = ch_height, ch_width
         self.slices = v_slices, h_slices
         self.chunks = v_slices * h_slices
@@ -100,14 +94,12 @@ class ImageHandler():
             interpolation=cv2.INTER_NEAREST)
         
     def apply(self, func):
-        for setter, chunk in self.__iter__():
-            setter(func(chunk))
+        for index, chunk in self.__iter__():
+            self.__setitem__(index, func(chunk))
 
-    def contrast(self, k, hw, row, col):
-        chunk = self.__getitem__((row, col))
+    def contrast(self, k, hw, chunk):
         avg = np.mean(chunk, axis=(0, 1)) / 255
         exp = np.exp(k * (avg - hw))
         sigmoid = exp / (1 + exp)
         new_values = (sigmoid * 255)
-        self.image[row, col] = new_values
-        return self.image[row, col]
+        return new_values

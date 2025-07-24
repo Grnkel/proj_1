@@ -14,8 +14,8 @@ class TerminalHandler(ImageHandler):
         width = int(width * 0.60) # ascii to wide in chars/
 
         size = os.get_terminal_size()
-        v_slices = -(-self.dims[0] // height) # att detta görs på två ställen är lite B
-        h_slices = -(-self.dims[1] // width)
+        v_slices = -(-np.shape(self.image)[0] // height) # att detta görs på två ställen är lite B
+        h_slices = -(-np.shape(self.image)[1] // width)
         y_diff = (size.lines - v_slices) * height
         x_diff = (size.columns - h_slices) * width
         self.extend(np.min((y_diff,0)), np.min((x_diff,0)))      
@@ -25,7 +25,7 @@ class TerminalHandler(ImageHandler):
         self.matrix = np.full((v_slices, h_slices) , '', dtype='<U50')         
     
     def to_terminal(self):
-        for i,j,chunk in super().__iter__():
+        for (i,j), chunk in super().__iter__():
             index = np.mean(chunk,axis=(0,1))
             r,g,b =  [int(np.ceil(v)) for v in index] if np.shape(index) != () else (255,255,255)
             index = np.mean(index) / 255
