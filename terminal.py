@@ -9,11 +9,10 @@ class TerminalHandler(ImageHandler):
         super().__init__(path)
 
         size = os.get_terminal_size()
-        print(size.lines, size.columns, "\n")
 
         min_diffs = (np.inf, np.inf, "")
         for filename in os.listdir("chars"):
-            
+
             self.ascii = Ascii("chars/" + filename)
             height, width = self.ascii.chunk_dims
             y_diff = (size.lines + (-np.shape(self.image)[0] // height)) * height
@@ -23,9 +22,8 @@ class TerminalHandler(ImageHandler):
                 min_diffs = (y_diff, x_diff, "chars/" + filename)
 
         y_diff, x_diff, size = min_diffs
-        height,width = self.ascii.chunk_dims
-        print("\n", y_diff/height, x_diff/width)
         self.ascii = Ascii(size)
+
         self.fit_chunk(self.ascii.chunk_dims)
         self.matrix = np.full(self.slices, "", dtype="<U50")
 
@@ -53,7 +51,7 @@ def term():
 
     # testing
     timer = time.perf_counter_ns()
-    term.apply(partial(term.contrast, 10, 0.5))
+    term.apply(partial(term.contrast, 11, 0.5))
     term.to_terminal()
     print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
 
