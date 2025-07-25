@@ -1,15 +1,17 @@
-from image import ImageHandler
 from terminal import TerminalHandler
-from gif import GifHandler
+from camera import ThreadedCamera
+from image import ImageHandler
+from ascii import Ascii
+
 
 from functools import partial
-from ascii import Ascii
+import imageio
 import time
-import numpy as np
+import cv2
 import os
 
 
-def cv2():
+def cv():
     image = ImageHandler("images/image1.jpg")
     ascii = Ascii("chars/font4x6.png")
     image.fit_chunk(ascii.chunk_dims)
@@ -22,37 +24,56 @@ def cv2():
     image.show()
 
 
-def term():
-    import time
-    from functools import partial
+def camera():
+    cam = ThreadedCamera()
+    ascii = Ascii("chars/font6x8.png")
 
-    term = TerminalHandler("images/image1.jpg")
+    while True:
+        ret, frame = cam.read()
+        if not ret:
+            break
+        image = ImageHandler(frame=frame)
+        image.fit_chunk(ascii.chunk_dims)
+        image.apply(ascii.ascii_print)
+        cv2.imshow("Threaded Camera", image.frame)
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
 
-    # testing
-    timer = time.perf_counter_ns()
-    term.apply(partial(term.contrast, 11, 0.5))
-    term.to_terminal()
-    print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
+        term = TerminalHandler(frame=frame)
+        term.fit()
+        term.to_terminal()
+
+    cam.stop()
+    cv2.destroyAllWindows()
 
 
 def gif():
+    sequence = [
+        cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        for frame in imageio.mimread("gifs/gif2.gif")
+    ]
+    term = TerminalHandler()
     ascii = Ascii("chars/font4x6.png")
+    i = 0
+    while True:
+        image = ImageHandler(frame=sequence[i])
+        image.fit_chunk(ascii.chunk_dims)
+        image.apply(ascii.ascii_print)
+        cv2.imshow("Threaded Camera", image.frame)
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
 
-    gif = GifHandler("gifs/gif1.gif")
-    gif.fit_chunk(ascii.chunk_dims)
-
-    print(gif[0,0,0])
-
-    # gif.sequence = np.array(gif.sequence)[range(0,len(gif.sequence),20)]
-    gif.sequence = np.array(gif.sequence)[range(0, len(gif.sequence), 10)]
-    gif.apply(ascii.ascii_print)
-    gif.show()
+        frame = sequence[i]
+        term.frame = frame
+        term.fit()
+        term.to_terminal()
+        i = (i + 1) % len(sequence)
 
 
 def main():
-    term()
-    cv2()
+    cv()
     gif()
+    camera()
 
 
 if __name__ == "__main__":

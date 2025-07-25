@@ -21,8 +21,8 @@ ascii_dict = {
 class Ascii(ImageHandler):
     def __init__(self, path):
         self.dict = ascii_dict
-        self.image = cv2.imread(path)
-        self.dims = np.shape(self.image)
+        self.frame = cv2.imread(path)
+        self.dims = np.shape(self.frame)
 
         match = re.match(r"chars/font(\d+)x(\d+).png", path)
         if match:
@@ -45,6 +45,6 @@ class Ascii(ImageHandler):
 
     def ascii_print(self, chunk):
         index = np.mean(chunk) / 255
-        index = self.sorted[int(index * len(self.sorted))]
+        index = self.sorted[int(index * (len(self.sorted)-1))]
         avg_color = np.mean(chunk, axis=(0, 1)) / 255
         return self.__getitem__(index) * avg_color
