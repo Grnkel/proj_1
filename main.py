@@ -19,6 +19,9 @@ def cv():
     # testing
     timer = time.perf_counter_ns()
     image.apply(ascii.ascii_print)
+    term = TerminalHandler(frame=image.frame)
+    term.fit()
+    term.to_terminal()
     print("time taken:", (time.perf_counter_ns() - timer) * 10**-6, "ms")
 
     image.show()
@@ -50,7 +53,7 @@ def camera():
 def gif():
     sequence = [
         cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        for frame in imageio.mimread("gifs/gif1.gif")
+        for frame in imageio.mimread("gifs/gif2.gif")
     ]
     term = TerminalHandler()
     ascii = Ascii("chars/font4x6.png")
