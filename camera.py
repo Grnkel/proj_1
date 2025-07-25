@@ -1,15 +1,6 @@
 import cv2
 import threading
-import time
-import os
-from functools import partial
-import imageio
 
-from image import ImageHandler
-from ascii import Ascii
-from terminal import TerminalHandler
-
-# TODO kolla igenom vad allt detta innebär och applicera på ditt program
 
 class ThreadedCamera:
     def __init__(self, src=0):

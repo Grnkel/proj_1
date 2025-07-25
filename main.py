@@ -50,7 +50,7 @@ def camera():
 def gif():
     sequence = [
         cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        for frame in imageio.mimread("gifs/gif2.gif")
+        for frame in imageio.mimread("gifs/gif1.gif")
     ]
     term = TerminalHandler()
     ascii = Ascii("chars/font4x6.png")

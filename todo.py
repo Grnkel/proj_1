@@ -11,3 +11,4 @@
 # TODO ta in streams från din webcamr
 # TODO fixa giffen! legit fixa den, den funkar ej! kanske basera din image på 
 # en lista och sedan ändra på allt genom det?
+# TODO kolla igenom vad allt detta innebär och applicera på ditt program

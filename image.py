@@ -1,5 +1,3 @@
-from multiprocessing import Pool, cpu_count, shared_memory
-from functools import partial
 import numpy as np
 import cv2
 
